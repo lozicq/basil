@@ -37,11 +37,11 @@
         .sub-text { font-size: 0.7rem; color: var(--text-muted); }
 
         .container {
-            max-width: 1250px;
+            max-width: 1280px;
             width: 100%;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1.05fr 0.95fr;
             gap: 12px;
         }
 
@@ -68,9 +68,22 @@
         .status-box .current { font-size: 1rem; font-weight: bold; color: var(--accent); }
         .status-box .count { font-size: 0.8rem; color: var(--text-muted); }
 
+        .recommend-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            color: #166534;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .section-title { font-size: 0.75rem; font-weight: bold; color: var(--text-muted); margin-bottom: 5px; margin-top: 6px; }
 
-        /* 전체 방 목록 2행*5열 그리드 */
         .room-grid-2x5 {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -79,7 +92,6 @@
             margin-bottom: 8px;
         }
         
-        /* 기본 방 카드 (미탐사 상태) */
         .room-card-box {
             background-color: #f8fafc;
             border: 1.5px solid var(--border);
@@ -97,21 +109,18 @@
         }
         .room-card-box:hover:not(.current-room) { border-color: var(--accent); background: #f0fdf4; }
         
-        /* 현재 방 */
         .room-card-box.current-room { 
             border: 2px solid var(--accent); 
             background: var(--accent-bg); 
             cursor: default;
         }
 
-        /* 출구 확인 체크된 상태 스타일 */
         .room-card-box.checked-exit {
             border-color: var(--warning);
             background-color: var(--warning-bg);
             box-shadow: 0 0 4px rgba(217, 119, 6, 0.3);
         }
 
-        /* 탐사 완료된 방 카드 스타일 (확연한 대비) */
         .room-card-box.visited-room {
             background-color: var(--success-bg);
             border-color: #4ade80;
@@ -123,7 +132,6 @@
         .badge.visited { background: #bbf7d0; color: #166534; font-weight: bold; }
         .badge.checked { background: #fef08a; color: #854d0e; font-weight: bold; }
 
-        /* 입장 버튼 */
         .enter-btn {
             background: var(--success);
             color: #fff;
@@ -139,7 +147,6 @@
         .enter-btn:hover:not(:disabled) { background: #15803d; }
         .enter-btn:disabled { opacity: 0.3; cursor: not-allowed; background: #cbd5e1; color: #64748b; }
 
-        /* 우측 패널 칩 및 목표 지정 */
         .status-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -157,21 +164,39 @@
             flex-direction: column;
             justify-content: space-between;
             gap: 3px;
-            min-height: 75px;
+            min-height: 105px;
+            cursor: pointer;
+            transition: border-color 0.2s;
         }
-        /* 우측 칩도 탐사 여부 확연히 구분 */
+        .room-chip:hover { border-color: var(--accent); }
         .room-chip.visited { background: var(--success-bg); border-color: #4ade80; color: #14532d; }
         .room-chip.unvisited { background: #fff1f2; border-color: #fda4af; color: #881337; }
         .room-chip.is-goal { border-color: var(--warning) !important; box-shadow: 0 0 5px var(--warning); background: var(--warning-bg) !important; color: #78350f !important; }
 
         .chip-top { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .chip-connections { font-size: 0.6rem; color: #334155; background: rgba(255,255,255,0.7); padding: 2px 4px; border-radius: 3px; line-height: 1.2; overflow: hidden; }
+        .chip-connections { font-size: 0.58rem; color: #334155; background: rgba(255,255,255,0.7); padding: 2px 4px; border-radius: 3px; line-height: 1.2; overflow: hidden; }
         
+        .chip-path {
+            font-size: 0.58rem;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: #0369a1;
+            font-weight: 600;
+            line-height: 1.2;
+            word-break: break-all;
+        }
+        .room-chip.unvisited .chip-path {
+            color: #be123c;
+            background: #ffffff;
+            border: 1px solid #fecdd3;
+        }
+
         .goal-chk-btn {
             background: #e2e8f0;
             border: none;
             color: #334155;
-            font-size: 0.6rem;
+            font-size: 0.60rem;
             padding: 2px 4px;
             border-radius: 3px;
             cursor: pointer;
@@ -180,7 +205,6 @@
         }
         .goal-chk-btn.active { background: var(--warning); color: #fff; font-weight: bold; }
 
-        /* 경로 박스 */
         .path-box {
             background: #f8fafc;
             border: 1px dashed var(--border);
@@ -194,7 +218,7 @@
             margin-bottom: 6px;
         }
 
-        .controls { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .controls { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
         .btn-main {
             background-color: var(--danger);
             color: white;
@@ -206,6 +230,18 @@
             font-weight: bold;
         }
         .btn-main:hover { opacity: 0.9; }
+
+        .btn-undo {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .start-select-box {
             display: flex;
@@ -228,11 +264,10 @@
 
     <header>
         <h1>Basil Lisk Exit</h1>
-        <div class="sub-text">방 카드를 클릭하면 **출구확인(체크)**됩니다. 출구가 확인된 방만 [입장]할 수 있습니다.</div>
+        <div class="sub-text">방 카드를 클릭하면 출구가 확인되며, 확인된 방으로 이동하여 탈출 경로를 탐색합니다.</div>
     </header>
 
     <div class="container">
-        <!-- 좌측 패널: 현재 방 및 2x5 그리드 조작 -->
         <div class="card">
             <h2>
                 <span>현재 위치 및 출구/입장 조작</span>
@@ -247,36 +282,32 @@
                 <div class="count">탐사 수: <span id="explore-count">0</span>회</div>
             </div>
 
-            <div class="section-title">전체 방 목록 (카드 클릭 = 출구확인)</div>
-            <div class="room-grid-2x5" id="master-room-grid">
-                <!-- 동적 생성 -->
+            <div class="recommend-box">
+                <span>💡 추천 이동 경로:</span>
+                <span id="recommend-text">계산 중...</span>
             </div>
 
+            <div class="section-title">전체 방 목록 (카드 클릭 = 출구확인)</div>
+            <div class="room-grid-2x5" id="master-room-grid"></div>
+
             <div class="controls">
+                <button class="btn-undo" id="undo-btn" onclick="undoMove()" disabled>↩️ 뒤로가기</button>
                 <div class="start-select-box">
                     <span>시작 방 변경:</span>
-                    <select id="start-room-select" onchange="changeStartRoom(this.value)">
-                        <!-- 동적 생성 -->
-                    </select>
+                    <select id="start-room-select" onchange="changeStartRoom(this.value)"></select>
                 </div>
                 <button class="btn-main" onclick="resetData()">전체 초기화</button>
             </div>
         </div>
 
-        <!-- 우측 패널: 방 상태 체크 및 최단 경로 -->
         <div class="card">
             <h2>
                 <span>방 탐사 현황 및 연결 정보</span>
                 <span style="font-size: 0.7rem; color: var(--success);">탐사: <span id="visited-num">0</span>/10</span>
             </h2>
 
-            <div class="section-title" style="margin-top:0;">10개 방 현황 (탐사/미탐사 대비 확연히 구분)</div>
-            <div class="status-grid" id="room-status-chips">
-                <!-- 동적 생성 -->
-            </div>
-
-            <div class="section-title">미탐사 방까지 최단 경로</div>
-            <div class="path-box" id="path-to-unvisited">대기 중...</div>
+            <div class="section-title" style="margin-top:0;">10개 방 현황 (각 방별 최단 경로 표기 중)</div>
+            <div class="status-grid" id="room-status-chips"></div>
 
             <div class="section-title">최종 목표 방까지 최단 경로</div>
             <div class="path-box" id="path-to-goal">목표 방이 지정되지 않았습니다.</div>
@@ -295,7 +326,40 @@
             goalRoom: ""
         };
 
+        let historyStack = [];
+
+        function saveHistory() {
+            historyStack.push({
+                currentRoom: state.currentRoom,
+                exploreCount: state.exploreCount,
+                visitedRooms: new Set(state.visitedRooms),
+                graph: JSON.parse(JSON.stringify(state.graph, (k, v) => v instanceof Set ? Array.from(v) : v)),
+                confirmedExits: JSON.parse(JSON.stringify(state.confirmedExits, (k, v) => v instanceof Set ? Array.from(v) : v)),
+                goalRoom: state.goalRoom
+            });
+            if (historyStack.length > 30) historyStack.shift();
+        }
+
+        function undoMove() {
+            if (historyStack.length === 0) return;
+            const lastState = historyStack.pop();
+
+            state.currentRoom = lastState.currentRoom;
+            state.exploreCount = lastState.exploreCount;
+            state.visitedRooms = new Set(lastState.visitedRooms);
+            state.goalRoom = lastState.goalRoom;
+
+            ROOMS.forEach(r => {
+                state.graph[r] = new Set(lastState.graph[r] || []);
+                state.confirmedExits[r] = new Set(lastState.confirmedExits[r] || []);
+            });
+
+            document.getElementById('start-room-select').value = state.currentRoom;
+            updateUI();
+        }
+
         function initGame(initialRoom = null) {
+            historyStack = [];
             state.currentRoom = initialRoom || ROOMS[0];
             state.exploreCount = 1;
             state.visitedRooms = new Set([state.currentRoom]);
@@ -322,6 +386,7 @@
         }
 
         function changeStartRoom(room) {
+            saveHistory();
             state.currentRoom = room;
             state.visitedRooms = new Set([room]); 
             state.exploreCount = 1;
@@ -332,9 +397,9 @@
             updateUI();
         }
 
-        // 방 카드 전체 영역 클릭 시 출구 확인 토글
         function handleCardClick(room) {
             if (room === state.currentRoom) return;
+            saveHistory();
             let currentExits = state.confirmedExits[state.currentRoom];
 
             if (currentExits.has(room)) {
@@ -343,6 +408,7 @@
             } else {
                 if (currentExits.size >= 3) {
                     alert("한 방에는 최대 3개의 출구까지만 확인할 수 있습니다!");
+                    historyStack.pop();
                     return;
                 }
                 currentExits.add(room);
@@ -352,7 +418,7 @@
         }
 
         function enterRoom(room, event) {
-            event.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+            if (event) event.stopPropagation();
             if (room === state.currentRoom) return;
             const prevRoom = state.currentRoom;
 
@@ -360,6 +426,8 @@
                 alert("먼저 해당 방 카드를 클릭하여 '출구확인' 체크를 한 후에 입장할 수 있습니다!");
                 return;
             }
+
+            saveHistory();
 
             state.currentRoom = room;
             if (!state.visitedRooms.has(room)) {
@@ -372,6 +440,7 @@
         }
 
         function setGoal(room) {
+            saveHistory();
             if (state.goalRoom === room) {
                 state.goalRoom = ""; 
             } else {
@@ -404,14 +473,51 @@
             return null;
         }
 
+        function getRecommendedNextMove() {
+            const currentExits = Array.from(state.confirmedExits[state.currentRoom] || []);
+
+            const unvisitedDirect = currentExits.filter(r => !state.visitedRooms.has(r));
+            if (unvisitedDirect.length > 0) {
+                return `[${unvisitedDirect[0]}] (미탐사 방 direct 입장 가능)`;
+            }
+
+            let unvisitedList = ROOMS.filter(r => !state.visitedRooms.has(r));
+            if (unvisitedList.length === 0) {
+                return "모든 방 탐사 완료! 🎉";
+            }
+
+            let shortestPath = null;
+            let targetRoom = null;
+
+            for (let uv of unvisitedList) {
+                let p = findShortestPath(state.currentRoom, uv);
+                if (p && (!shortestPath || p.length < shortestPath.length)) {
+                    shortestPath = p;
+                    targetRoom = uv;
+                }
+            }
+
+            if (shortestPath && shortestPath.length > 1) {
+                return `[${shortestPath[1]}] 방향 (${targetRoom} 탐사를 위해 이동)`;
+            }
+
+            if (currentExits.length < 3) {
+                return "새로운 출구를 확인(카드 클릭)해 보세요.";
+            }
+
+            return "다른 경로로 돌아가서 탐사해야 합니다.";
+        }
+
         function updateUI() {
             document.getElementById('current-room-name').textContent = state.currentRoom;
             document.getElementById('explore-count').textContent = state.exploreCount;
 
+            document.getElementById('undo-btn').disabled = (historyStack.length === 0);
+            document.getElementById('recommend-text').textContent = getRecommendedNextMove();
+
             const currentExits = state.confirmedExits[state.currentRoom] || new Set();
             document.getElementById('exit-count-text').textContent = `출구: ${currentExits.size}/3개`;
 
-            // 1. 좌측 2x5 그리드 방 목록 렌더링
             const masterGrid = document.getElementById('master-room-grid');
             masterGrid.innerHTML = '';
 
@@ -421,8 +527,6 @@
                 let isVisited = state.visitedRooms.has(room);
 
                 let box = document.createElement('div');
-                
-                // 클래스 부여 (현재방, 출구체크됨, 탐사완료 여부 분기)
                 let boxClass = 'room-card-box';
                 if (isCurrent) {
                     boxClass += ' current-room';
@@ -432,7 +536,6 @@
                 }
                 box.className = boxClass;
 
-                // 카드 전체 클릭 시 출구확인 토글 (현재 방 제외)
                 if (!isCurrent) {
                     box.onclick = () => handleCardClick(room);
                 }
@@ -474,17 +577,28 @@
                 masterGrid.appendChild(box);
             });
 
-            // 2. 우측 10개 방 칩 렌더링 (탐사/미탐사 명확한 시각적 대비)
             const chipsContainer = document.getElementById('room-status-chips');
             chipsContainer.innerHTML = '';
 
             ROOMS.forEach(room => {
                 let isVisited = state.visitedRooms.has(room);
                 let isGoal = (state.goalRoom === room);
+                let isCurrent = (room === state.currentRoom);
                 let exits = state.confirmedExits[room] || new Set();
+
+                let path = findShortestPath(state.currentRoom, room);
+                let pathStr = "";
+                if (isCurrent) {
+                    pathStr = "현재 위치";
+                } else if (path) {
+                    pathStr = path.join('➔');
+                } else {
+                    pathStr = "경로 없음";
+                }
 
                 let chip = document.createElement('div');
                 chip.className = 'room-chip ' + (isVisited ? 'visited' : 'unvisited') + (isGoal ? ' is-goal' : '');
+                chip.onclick = () => setGoal(room);
 
                 let chipTop = document.createElement('div');
                 chipTop.className = 'chip-top';
@@ -492,60 +606,38 @@
 
                 let connDiv = document.createElement('div');
                 connDiv.className = 'chip-connections';
-                if (exits.size > 0) {
-                    connDiv.innerHTML = `연결(${exits.size}): ${Array.from(exits).join(', ')}`;
-                } else {
-                    connDiv.innerHTML = `연결 없음 (0)`;
-                }
+                connDiv.innerHTML = exits.size > 0 ? `연결(${exits.size}): ${Array.from(exits).join(',')}` : `연결 없음`;
+
+                let pathDiv = document.createElement('div');
+                pathDiv.className = 'chip-path';
+                pathDiv.innerHTML = `📍 ${pathStr}`;
 
                 let goalBtn = document.createElement('button');
                 goalBtn.className = 'goal-chk-btn' + (isGoal ? ' active' : '');
                 goalBtn.textContent = isGoal ? '목표 지정됨' : '목표 지정';
-                goalBtn.onclick = () => setGoal(room);
+                goalBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    setGoal(room);
+                };
 
                 chip.appendChild(chipTop);
                 chip.appendChild(connDiv);
+                chip.appendChild(pathDiv);
                 chip.appendChild(goalBtn);
                 chipsContainer.appendChild(chip);
             });
 
             document.getElementById('visited-num').textContent = state.visitedRooms.size;
 
-            // 3. 미탐사 방 최단 경로
-            const pathToUnvisitedEl = document.getElementById('path-to-unvisited');
-            let unvisitedList = ROOMS.filter(r => !state.visitedRooms.has(r));
-            
-            if (unvisitedList.length === 0) {
-                pathToUnvisitedEl.textContent = "모든 방을 탐사했습니다!";
-            } else {
-                let shortest = null;
-                let targetUnvisited = null;
-                
-                for (let uv of unvisitedList) {
-                    let p = findShortestPath(state.currentRoom, uv);
-                    if (p && (!shortest || p.length < shortest.length)) {
-                        shortest = p;
-                        targetUnvisited = uv;
-                    }
-                }
-
-                if (shortest) {
-                    pathToUnvisitedEl.textContent = `${targetUnvisited}까지: ` + shortest.join(' ➔ ');
-                } else {
-                    pathToUnvisitedEl.textContent = "도달 가능한 미탐사 방이 없습니다.";
-                }
-            }
-
-            // 4. 목표 방 최단 경로
             const pathToGoalEl = document.getElementById('path-to-goal');
             if (!state.goalRoom) {
                 pathToGoalEl.textContent = "목표 방이 지정되지 않았습니다.";
             } else {
                 let goalPath = findShortestPath(state.currentRoom, state.goalRoom);
                 if (goalPath) {
-                    pathToGoalEl.textContent = goalPath.join(' ➔ ');
+                    pathToGoalEl.textContent = `[목표: ${state.goalRoom}] ` + goalPath.join(' ➔ ');
                 } else {
-                    pathToGoalEl.textContent = "지정된 목표 방까지의 경로가 없습니다.";
+                    pathToGoalEl.textContent = `[목표: ${state.goalRoom}] 도달 가능한 경로가 없습니다.`;
                 }
             }
         }
