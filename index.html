@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BasilLisk Exit</title>
+    <title>Basil Lisk Exit</title>
     <style>
         :root {
             --bg-color: #f1f5f9;
@@ -24,9 +24,8 @@
         body { 
             background-color: var(--bg-color); 
             color: var(--text-main); 
-            padding: 10px 20px; 
-            height: 100vh; 
-            overflow: hidden; 
+            padding: 10px 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -173,6 +172,9 @@
         .room-chip.unvisited { background: #fff1f2; border-color: #fda4af; color: #881337; }
         .room-chip.is-goal { border-color: var(--warning) !important; box-shadow: 0 0 5px var(--warning); background: var(--warning-bg) !important; color: #78350f !important; }
 
+        .room-chip.is-current { outline: 2.5px solid var(--accent); outline-offset: 1px; }
+        .cur-tag { font-size: 0.55rem; background: var(--accent); color: #fff; padding: 1px 4px; border-radius: 3px; }
+
         .chip-top { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
         .chip-connections { font-size: 0.58rem; color: #334155; background: rgba(255,255,255,0.7); padding: 2px 4px; border-radius: 3px; line-height: 1.2; overflow: hidden; }
         
@@ -258,13 +260,23 @@
             border-radius: 4px;
             font-size: 0.75rem;
         }
+
+        /* 좁은 화면: 위아래 1단, 방 칸 수 줄이기 */
+        @media (max-width: 900px) {
+            body { padding: 10px 12px; justify-content: flex-start; }
+            .container { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 520px) {
+            .room-grid-2x5, .status-grid { grid-template-columns: repeat(3, 1fr); }
+            .controls { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Basil Lisk Exit</h1>
-        <div class="sub-text">방 카드를 클릭하면 출구가 확인되며, 확인된 방으로 이동하여 탈출 경로를 탐색합니다.</div>
+        <div class="sub-text">방 카드를 클릭하면 출구가 확인되며, 확인된 방으로 이동하여 탈출 경로를 탐색합니다. (출구는 한쪽 방향 통로 · 기록은 자동 저장)</div>
     </header>
 
     <div class="container">
@@ -279,7 +291,7 @@
                     <div style="font-size: 0.65rem; color: var(--text-muted);">현재 방</div>
                     <div class="current" id="current-room-name">-</div>
                 </div>
-                <div class="count">탐사 수: <span id="explore-count">0</span>회</div>
+                <div class="count">이동 횟수: <span id="explore-count">0</span>회</div>
             </div>
 
             <div class="recommend-box">
@@ -293,7 +305,7 @@
             <div class="controls">
                 <button class="btn-undo" id="undo-btn" onclick="undoMove()" disabled>↩️ 뒤로가기</button>
                 <div class="start-select-box">
-                    <span>시작 방 변경:</span>
+                    <span>시작 방:</span>
                     <select id="start-room-select" onchange="changeStartRoom(this.value)"></select>
                 </div>
                 <button class="btn-main" onclick="resetData()">전체 초기화</button>
@@ -317,83 +329,117 @@
     <script>
         const ROOMS = ["식물", "토템", "선인장", "비석", "신전", "쉼터", "전갈", "구덩이", "여행자", "사막"];
 
+        const STORAGE_KEY = 'basil-lisk-exit-v1';
+
+        // 출구(통로)는 한쪽 방향: graph[A]에 B가 있으면 A→B만 가능
         let state = {
+            startRoom: "",
             currentRoom: "",
-            exploreCount: 0,
+            exploreCount: 0,   // 이동 횟수
             visitedRooms: new Set(),
-            graph: {}, 
-            confirmedExits: {}, 
+            graph: {},
+            confirmedExits: {},
             goalRoom: ""
         };
 
         let historyStack = [];
 
-        function saveHistory() {
-            historyStack.push({
+        function snapshot() {
+            const toArr = obj => {
+                const out = {};
+                ROOMS.forEach(r => { out[r] = Array.from(obj[r] || []); });
+                return out;
+            };
+            return {
+                startRoom: state.startRoom,
                 currentRoom: state.currentRoom,
                 exploreCount: state.exploreCount,
-                visitedRooms: new Set(state.visitedRooms),
-                graph: JSON.parse(JSON.stringify(state.graph, (k, v) => v instanceof Set ? Array.from(v) : v)),
-                confirmedExits: JSON.parse(JSON.stringify(state.confirmedExits, (k, v) => v instanceof Set ? Array.from(v) : v)),
+                visitedRooms: Array.from(state.visitedRooms),
+                graph: toArr(state.graph),
+                confirmedExits: toArr(state.confirmedExits),
                 goalRoom: state.goalRoom
+            };
+        }
+
+        function restore(snap) {
+            state.startRoom = ROOMS.includes(snap.startRoom) ? snap.startRoom : ROOMS[0];
+            state.currentRoom = ROOMS.includes(snap.currentRoom) ? snap.currentRoom : state.startRoom;
+            state.exploreCount = snap.exploreCount || 0;
+            state.visitedRooms = new Set(snap.visitedRooms || [state.currentRoom]);
+            state.goalRoom = snap.goalRoom || "";
+            state.graph = {};
+            state.confirmedExits = {};
+            ROOMS.forEach(r => {
+                state.graph[r] = new Set((snap.graph && snap.graph[r]) || []);
+                state.confirmedExits[r] = new Set((snap.confirmedExits && snap.confirmedExits[r]) || []);
             });
+        }
+
+        function saveToStorage() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot())); } catch (e) {}
+        }
+
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        function saveHistory() {
+            historyStack.push(snapshot());
             if (historyStack.length > 30) historyStack.shift();
         }
 
         function undoMove() {
             if (historyStack.length === 0) return;
-            const lastState = historyStack.pop();
-
-            state.currentRoom = lastState.currentRoom;
-            state.exploreCount = lastState.exploreCount;
-            state.visitedRooms = new Set(lastState.visitedRooms);
-            state.goalRoom = lastState.goalRoom;
-
-            ROOMS.forEach(r => {
-                state.graph[r] = new Set(lastState.graph[r] || []);
-                state.confirmedExits[r] = new Set(lastState.confirmedExits[r] || []);
-            });
-
-            document.getElementById('start-room-select').value = state.currentRoom;
+            restore(historyStack.pop());
             updateUI();
         }
 
-        function initGame(initialRoom = null) {
-            historyStack = [];
-            state.currentRoom = initialRoom || ROOMS[0];
-            state.exploreCount = 1;
-            state.visitedRooms = new Set([state.currentRoom]);
-            state.graph = {};
-            state.confirmedExits = {};
-            state.goalRoom = "";
-
-            ROOMS.forEach(r => {
-                state.graph[r] = new Set();
-                state.confirmedExits[r] = new Set();
-            });
-
+        function fillStartSelect() {
             const startSelect = document.getElementById('start-room-select');
             startSelect.innerHTML = '';
             ROOMS.forEach(r => {
                 let opt = document.createElement('option');
                 opt.value = r;
                 opt.textContent = r;
-                if (r === state.currentRoom) opt.selected = true;
                 startSelect.appendChild(opt);
             });
-
-            updateUI();
         }
 
-        function changeStartRoom(room) {
-            saveHistory();
-            state.currentRoom = room;
-            state.visitedRooms = new Set([room]); 
-            state.exploreCount = 1;
+        function freshState(startRoom) {
+            state.startRoom = startRoom;
+            state.currentRoom = startRoom;
+            state.exploreCount = 0;
+            state.visitedRooms = new Set([startRoom]);
+            state.goalRoom = "";
+            state.graph = {};
+            state.confirmedExits = {};
             ROOMS.forEach(r => {
                 state.graph[r] = new Set();
                 state.confirmedExits[r] = new Set();
             });
+        }
+
+        function initGame(initialRoom = null) {
+            historyStack = [];
+            freshState(initialRoom || ROOMS[0]);
+            updateUI();
+        }
+
+        function hasProgress() {
+            return state.exploreCount > 0 || state.goalRoom ||
+                ROOMS.some(r => state.confirmedExits[r] && state.confirmedExits[r].size > 0);
+        }
+
+        function changeStartRoom(room) {
+            if (hasProgress() && !confirm(`시작 방을 [${room}](으)로 바꾸면 지금까지의 기록이 지워집니다. 바꿀까요?\n(뒤로가기로 되돌릴 수 있습니다)`)) {
+                document.getElementById('start-room-select').value = state.startRoom;
+                return;
+            }
+            saveHistory();
+            freshState(room);
             updateUI();
         }
 
@@ -430,12 +476,9 @@
             saveHistory();
 
             state.currentRoom = room;
-            if (!state.visitedRooms.has(room)) {
-                state.visitedRooms.add(room);
-                state.exploreCount++;
-            }
+            state.visitedRooms.add(room);
+            state.exploreCount++;
 
-            document.getElementById('start-room-select').value = room;
             updateUI();
         }
 
@@ -478,7 +521,7 @@
 
             const unvisitedDirect = currentExits.filter(r => !state.visitedRooms.has(r));
             if (unvisitedDirect.length > 0) {
-                return `[${unvisitedDirect[0]}] (미탐사 방 direct 입장 가능)`;
+                return `[${unvisitedDirect[0]}] (미탐사 방, 바로 입장 가능)`;
             }
 
             let unvisitedList = ROOMS.filter(r => !state.visitedRooms.has(r));
@@ -510,6 +553,7 @@
 
         function updateUI() {
             document.getElementById('current-room-name').textContent = state.currentRoom;
+            document.getElementById('start-room-select').value = state.startRoom;
             document.getElementById('explore-count').textContent = state.exploreCount;
 
             document.getElementById('undo-btn').disabled = (historyStack.length === 0);
@@ -597,12 +641,12 @@
                 }
 
                 let chip = document.createElement('div');
-                chip.className = 'room-chip ' + (isVisited ? 'visited' : 'unvisited') + (isGoal ? ' is-goal' : '');
+                chip.className = 'room-chip ' + (isVisited ? 'visited' : 'unvisited') + (isGoal ? ' is-goal' : '') + (isCurrent ? ' is-current' : '');
                 chip.onclick = () => setGoal(room);
 
                 let chipTop = document.createElement('div');
                 chipTop.className = 'chip-top';
-                chipTop.innerHTML = `<span>${room}</span>`;
+                chipTop.innerHTML = `<span>${room}</span>` + (isCurrent ? `<span class="cur-tag">현재</span>` : '');
 
                 let connDiv = document.createElement('div');
                 connDiv.className = 'chip-connections';
@@ -640,15 +684,26 @@
                     pathToGoalEl.textContent = `[목표: ${state.goalRoom}] 도달 가능한 경로가 없습니다.`;
                 }
             }
+
+            saveToStorage();
         }
 
         function resetData() {
-            if (confirm("게임을 초기화하시겠습니까?")) {
-                initGame(document.getElementById('start-room-select').value);
+            if (confirm(`게임을 초기화하시겠습니까?\n(시작 방 [${state.startRoom}]에서 다시 시작합니다)`)) {
+                initGame(state.startRoom);
             }
         }
 
-        window.onload = () => initGame();
+        window.onload = () => {
+            fillStartSelect();
+            const saved = loadFromStorage();
+            if (saved) {
+                restore(saved);
+                updateUI();
+            } else {
+                initGame();
+            }
+        };
     </script>
 </body>
 </html>
