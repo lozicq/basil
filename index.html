@@ -266,9 +266,87 @@
             body { padding: 10px 12px; justify-content: flex-start; }
             .container { grid-template-columns: 1fr; }
         }
+        /* 위치 수정 모드 */
+        .btn-relocate {
+            background: #fff;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .btn-relocate.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+        .relocate-hint {
+            display: none;
+            background: #ede9fe;
+            border: 1px solid #c4b5fd;
+            color: #5b21b6;
+            font-size: 0.72rem;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 4px 8px;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        body.relocating .relocate-hint { display: block; }
+        body.relocating .room-card-box:not(.current-room) { border-color: #a78bfa; border-style: dashed; }
+        body.relocating .room-card-box:not(.current-room):hover { background: #f5f3ff; }
+        body.relocating .enter-btn { visibility: hidden; }
+
+        .conn-short, .short { display: none; }
+
+        /* 폰 세로 화면: 스크롤 없이 한 화면에 */
         @media (max-width: 520px) {
-            .room-grid-2x5, .status-grid { grid-template-columns: repeat(3, 1fr); }
-            .controls { flex-wrap: wrap; }
+            body { padding: 6px 8px; min-height: 100dvh; }
+            header { margin-bottom: 4px; }
+            h1 { font-size: 0.95rem; margin: 0; }
+            .sub-text { display: none; }
+            .container { gap: 6px; }
+            .card { padding: 6px 7px; border-radius: 8px; }
+            .card h2 { font-size: 0.78rem; margin-bottom: 4px; padding-bottom: 3px; }
+
+            .status-box { padding: 4px 8px; margin-bottom: 4px; }
+            .status-box .label { display: none; }
+            .status-box .current { font-size: 0.9rem; }
+            .status-box .count { font-size: 0.7rem; }
+            .recommend-box { font-size: 0.68rem; padding: 4px 7px; margin-bottom: 4px; gap: 4px; }
+            .recommend-box > span:first-child { white-space: nowrap; }
+            .relocate-hint { font-size: 0.66rem; padding: 3px 6px; margin-bottom: 4px; }
+            .section-title { font-size: 0.64rem; margin: 2px 0 3px; }
+
+            .room-grid-2x5, .status-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 4px; }
+            .room-card-box { padding: 4px 2px; gap: 3px; font-size: 0.72rem; border-radius: 5px; }
+            .room-card-header { flex-direction: column; gap: 2px; }
+            .badge { font-size: 0.5rem; padding: 0 3px; }
+            .enter-btn { padding: 6px 0; font-size: 0.68rem; }
+            .room-card-box .cur-text { padding: 4px 0 !important; font-size: 0.65rem !important; }
+
+            .controls { margin-top: 4px; gap: 4px; flex-wrap: nowrap; }
+            .btn-undo, .btn-main, .btn-relocate { padding: 7px 7px; font-size: 0.68rem; white-space: nowrap; }
+            .start-select-box { font-size: 0.66rem; gap: 2px; white-space: nowrap; }
+            .start-select-box select { padding: 5px 2px; font-size: 0.7rem; }
+            .long { display: none; }
+            .short { display: inline; }
+
+            .room-chip { min-height: 0; padding: 3px; font-size: 0.66rem; gap: 2px; border-radius: 5px; }
+            .chip-top { font-size: 0.66rem; }
+            .cur-tag { font-size: 0.48rem; padding: 0 3px; }
+            .chip-connections, .chip-path { font-size: 0.52rem; padding: 1px 2px; }
+            .conn-long { display: none; }
+            .conn-short { display: inline; }
+            .chip-path {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                line-height: 1.25;
+                padding: 0 2px;
+                max-height: calc(2.5em + 2px);
+            }
+            .goal-chk-btn { display: none; }
+            .path-box { min-height: 0; padding: 4px 7px; font-size: 0.68rem; margin-bottom: 0; }
         }
     </style>
 </head>
@@ -288,7 +366,7 @@
             
             <div class="status-box">
                 <div>
-                    <div style="font-size: 0.65rem; color: var(--text-muted);">현재 방</div>
+                    <div class="label" style="font-size: 0.65rem; color: var(--text-muted);">현재 방</div>
                     <div class="current" id="current-room-name">-</div>
                 </div>
                 <div class="count">이동 횟수: <span id="explore-count">0</span>회</div>
@@ -299,16 +377,19 @@
                 <span id="recommend-text">계산 중...</span>
             </div>
 
+            <div class="relocate-hint">📍 위치 수정: 지금 실제로 있는 방을 탭하세요 (통로는 기록 안 됨)</div>
+
             <div class="section-title">전체 방 목록 (카드 클릭 = 출구확인)</div>
             <div class="room-grid-2x5" id="master-room-grid"></div>
 
             <div class="controls">
-                <button class="btn-undo" id="undo-btn" onclick="undoMove()" disabled>↩️ 뒤로가기</button>
+                <button class="btn-undo" id="undo-btn" onclick="undoMove()" disabled>↩️ <span class="long">뒤로가기</span><span class="short">뒤로</span></button>
+                <button class="btn-relocate" id="relocate-btn" onclick="toggleRelocate()">📍 <span class="long">위치 수정</span><span class="short">위치</span></button>
                 <div class="start-select-box">
-                    <span>시작 방:</span>
+                    <span>시작<span class="long"> 방</span>:</span>
                     <select id="start-room-select" onchange="changeStartRoom(this.value)"></select>
                 </div>
-                <button class="btn-main" onclick="resetData()">전체 초기화</button>
+                <button class="btn-main" onclick="resetData()"><span class="long">전체 </span>초기화</button>
             </div>
         </div>
 
@@ -392,6 +473,7 @@
         }
 
         function undoMove() {
+            if (typeof toggleRelocate === 'function') toggleRelocate(false);
             if (historyStack.length === 0) return;
             restore(historyStack.pop());
             updateUI();
@@ -443,7 +525,26 @@
             updateUI();
         }
 
+        // 위치 수정 모드: 길을 잊었을 때 현재 위치만 바로잡기 (통로 기록 X, 이동 횟수 X)
+        let relocateMode = false;
+
+        function toggleRelocate(force) {
+            relocateMode = (typeof force === 'boolean') ? force : !relocateMode;
+            document.body.classList.toggle('relocating', relocateMode);
+            document.getElementById('relocate-btn').classList.toggle('active', relocateMode);
+        }
+
+        function relocateTo(room) {
+            if (room === state.currentRoom) { toggleRelocate(false); return; }
+            saveHistory();
+            state.currentRoom = room;
+            state.visitedRooms.add(room);
+            toggleRelocate(false);
+            updateUI();
+        }
+
         function handleCardClick(room) {
+            if (relocateMode) { relocateTo(room); return; }
             if (room === state.currentRoom) return;
             saveHistory();
             let currentExits = state.confirmedExits[state.currentRoom];
@@ -580,9 +681,7 @@
                 }
                 box.className = boxClass;
 
-                if (!isCurrent) {
-                    box.onclick = () => handleCardClick(room);
-                }
+                box.onclick = () => handleCardClick(room);
 
                 let headerDiv = document.createElement('div');
                 headerDiv.className = 'room-card-header';
@@ -602,6 +701,7 @@
 
                 if (isCurrent) {
                     let curText = document.createElement('div');
+                    curText.className = 'cur-text';
                     curText.style.fontSize = '0.75rem';
                     curText.style.color = 'var(--accent)';
                     curText.style.fontWeight = 'bold';
@@ -650,11 +750,13 @@
 
                 let connDiv = document.createElement('div');
                 connDiv.className = 'chip-connections';
-                connDiv.innerHTML = exits.size > 0 ? `연결(${exits.size}): ${Array.from(exits).join(',')}` : `연결 없음`;
+                connDiv.innerHTML = exits.size > 0
+                    ? `<span class="conn-long">연결(${exits.size}): ${Array.from(exits).join(',')}</span><span class="conn-short">→${Array.from(exits).join(',')}</span>`
+                    : `<span class="conn-long">연결 없음</span><span class="conn-short">→ 없음</span>`;
 
                 let pathDiv = document.createElement('div');
                 pathDiv.className = 'chip-path';
-                pathDiv.innerHTML = `📍 ${pathStr}`;
+                pathDiv.textContent = `📍 ${pathStr}`;
 
                 let goalBtn = document.createElement('button');
                 goalBtn.className = 'goal-chk-btn' + (isGoal ? ' active' : '');
